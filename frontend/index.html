@@ -44,7 +44,10 @@
       <div class="card-title">联系方式</div>
       <div class="form-group" id="phoneGroup">
         <label for="phoneInput">手机号</label>
-        <input type="tel" id="phoneInput" placeholder="请输入11位手机号" maxlength="11" inputmode="numeric">
+        <input type="tel" id="phoneInput" placeholder="请输入11位手机号" maxlength="11" inputmode="numeric" autocomplete="tel-national" name="phone">
+        <div class="quick-fill" id="quickFill" style="display:none;">
+          <button type="button" id="quickFillBtn" class="quick-fill-btn">📱 一键填充</button>
+        </div>
         <div class="hint">仅用于服务回访，不会泄露您的隐私</div>
         <div class="error" id="phoneError">请输入正确的11位手机号</div>
       </div>

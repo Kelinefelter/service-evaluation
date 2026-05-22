@@ -177,6 +177,65 @@ function initPhoneInput() {
 
     checkSubmitEnabled();
   });
+
+  // 尝试自动填充手机号
+  autoFillPhone();
+}
+
+/**
+ * 自动填充手机号（多策略尝试）
+ * 优先级: localStorage记忆 > URL参数 > 浏览器自动填充
+ */
+function autoFillPhone() {
+  const input = document.getElementById('phoneInput');
+  const quickFill = document.getElementById('quickFill');
+  const quickFillBtn = document.getElementById('quickFillBtn');
+
+  // 策略1: 从URL参数获取（支持二维码携带手机号 ?outlet=longshan&phone=13800138000）
+  const params = new URLSearchParams(window.location.search);
+  const urlPhone = params.get('phone') || '';
+  if (urlPhone && isValidPhone(urlPhone)) {
+    input.value = urlPhone;
+    state.phone = urlPhone;
+    document.getElementById('phoneGroup').classList.remove('error');
+    checkSubmitEnabled();
+    return;
+  }
+
+  // 策略2: 从localStorage读取上次使用的手机号
+  try {
+    const rememberedPhone = localStorage.getItem('last_evaluation_phone');
+    if (rememberedPhone && isValidPhone(rememberedPhone)) {
+      // 显示一键填充按钮
+      quickFill.style.display = 'block';
+      quickFillBtn.textContent = '📱 使用 ' + rememberedPhone + ' 一键填充';
+      quickFillBtn.onclick = function () {
+        input.value = rememberedPhone;
+        state.phone = rememberedPhone;
+        document.getElementById('phoneGroup').classList.remove('error');
+        checkSubmitEnabled();
+        quickFill.style.display = 'none';
+        input.focus();
+      };
+      return;
+    }
+  } catch (e) { /* ignore */ }
+
+  // 策略3: 尝试使用浏览器 Credential Management API (需 HTTPS + 服务端配置)
+  // 仅在已存储过手机号的场景下生效
+  if (window.PasswordCredential && navigator.credentials) {
+    navigator.credentials.get({
+      password: false,
+      mediation: 'silent'
+    }).then(cred => {
+      if (cred && cred.id && isValidPhone(cred.id)) {
+        input.value = cred.id;
+        state.phone = cred.id;
+        document.getElementById('phoneGroup').classList.remove('error');
+        checkSubmitEnabled();
+      }
+    }).catch(() => { /* ignore */ });
+  }
 }
 
 /**
@@ -257,6 +316,10 @@ async function handleSubmit() {
     const result = await response.json();
 
     if (result.success) {
+      // 记住手机号（下次自动填充）
+      try {
+        localStorage.setItem('last_evaluation_phone', state.phone);
+      } catch (e) { /* ignore */ }
       // 显示成功弹窗
       showSuccess(result.message, result.data);
       // 标记已评价（防止重复评价）
