@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理后台 - 服务评价系统</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- 顶部导航 -->
+    <div class="admin-header">
+      <h1>📊 评价管理后台</h1>
+      <a href="index.html" style="font-size:14px; color: var(--primary); text-decoration: none;">← 评价页面</a>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="stats-cards" id="statsCards">
+      <div class="stat-card">
+        <div class="stat-value" id="totalCount">-</div>
+        <div class="stat-label">总评价数</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="overallAvg">-</div>
+        <div class="stat-label">总平均分</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="todayCount">-</div>
+        <div class="stat-label">营业厅数量</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="bestOutlet">-</div>
+        <div class="stat-label">最高分营业厅</div>
+      </div>
+    </div>
+
+    <!-- 工具栏 -->
+    <div class="admin-toolbar">
+      <select id="outletFilter">
+        <option value="">全部营业厅</option>
+      </select>
+      <button id="refreshBtn">刷新数据</button>
+      <button id="exportBtn" class="secondary">📥 导出CSV</button>
+    </div>
+
+    <!-- 营业厅统计详情 -->
+    <div class="card" style="margin-bottom: 16px;">
+      <div class="card-title">各营业厅统计</div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>营业厅</th>
+              <th>评价数</th>
+              <th>平均分</th>
+              <th>最低分</th>
+              <th>最高分</th>
+            </tr>
+          </thead>
+          <tbody id="outletStatsBody">
+            <tr><td colspan="5" style="text-align:center; color:var(--text-secondary)">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 评价列表 -->
+    <div class="card">
+      <div class="card-title">评价记录</div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>营业厅</th>
+              <th>评分</th>
+              <th>手机号</th>
+              <th>IP</th>
+              <th>时间</th>
+            </tr>
+          </thead>
+          <tbody id="evalTableBody">
+            <tr><td colspan="6" style="text-align:center; color:var(--text-secondary)">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 分页 -->
+      <div class="pagination" id="pagination">
+        <button id="prevBtn" disabled>上一页</button>
+        <span id="pageInfo">第 1 页</span>
+        <button id="nextBtn" disabled>下一页</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

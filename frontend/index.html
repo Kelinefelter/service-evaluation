@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="营业厅服务评价">
+  <title>服务评价</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- 头部区域 -->
+    <div class="header">
+      <div class="logo">⭐</div>
+      <h1>服务评价</h1>
+      <div class="outlet-name" id="outletName">加载中...</div>
+    </div>
+
+    <!-- 评分区域 -->
+    <div class="card">
+      <div class="card-title">请为本次服务评分</div>
+      <div class="score-section">
+        <!-- 当前评分展示 -->
+        <div class="score-display" id="scoreDisplay">
+          <span id="currentScore">-</span><span class="max"> / 10</span>
+        </div>
+        <div class="score-label" id="scoreLabel">请点击下方按钮选择分数</div>
+
+        <!-- 评分按钮 1-10 -->
+        <div class="score-buttons" id="scoreButtons">
+          <!-- JS 动态生成 -->
+        </div>
+
+        <!-- 自定义分数输入 -->
+        <div class="custom-score">
+          <span>或直接输入：</span>
+          <input type="number" id="customScoreInput" min="1" max="10" placeholder="1-10">
+        </div>
+      </div>
+    </div>
+
+    <!-- 手机号输入 -->
+    <div class="card">
+      <div class="card-title">联系方式</div>
+      <div class="form-group" id="phoneGroup">
+        <label for="phoneInput">手机号</label>
+        <input type="tel" id="phoneInput" placeholder="请输入11位手机号" maxlength="11" inputmode="numeric">
+        <div class="hint">仅用于服务回访，不会泄露您的隐私</div>
+        <div class="error" id="phoneError">请输入正确的11位手机号</div>
+      </div>
+    </div>
+
+    <!-- 提交按钮 -->
+    <button class="submit-btn" id="submitBtn" disabled>
+      提交评价
+    </button>
+  </div>
+
+  <!-- 成功提示弹窗 -->
+  <div class="success-overlay" id="successOverlay" style="display: none;">
+    <div class="success-card">
+      <div class="success-icon">🎉</div>
+      <h2>感谢您的评价！</h2>
+      <p id="successMsg">您的反馈是我们前进的动力</p>
+      <button onclick="closeSuccess()">确定</button>
+    </div>
+  </div>
+
+  <!-- Toast 提示 -->
+  <div id="toast" class="toast" style="display: none;"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

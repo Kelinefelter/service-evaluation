@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>营业厅二维码汇总</title>
+  <!-- QRCode.js from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js">
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f5f7fa;
+      color: #333;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 8px;
+      font-size: 24px;
+      color: #1a1a2e;
+    }
+    .subtitle {
+      text-align: center;
+      margin-bottom: 24px;
+      color: #666;
+      font-size: 14px;
+    }
+    .deploy-info {
+      max-width: 700px;
+      margin: 0 auto 24px;
+      padding: 12px 16px;
+      background: #fff8e1;
+      border: 1px solid #ffc107;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #795548;
+      text-align: center;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+      max-width: 960px;
+      margin: 0 auto 40px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      padding: 20px;
+      text-align: center;
+      transition: transform 0.2s;
+    }
+    .card:hover { transform: translateY(-2px); }
+    .card h3 {
+      font-size: 18px;
+      margin-bottom: 4px;
+      color: #1a1a2e;
+    }
+    .card .code-label {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 12px;
+    }
+    .card .qrcode {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 12px;
+      min-height: 180px;
+    }
+    .card .url-info {
+      font-size: 11px;
+      color: #aaa;
+      word-break: break-all;
+      line-height: 1.5;
+    }
+    .print-btn {
+      display: block;
+      margin: 0 auto 40px;
+      padding: 12px 32px;
+      background: #4361ee;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .print-btn:hover { background: #3a56d4; }
+    .note {
+      max-width: 700px;
+      margin: 0 auto;
+      font-size: 12px;
+      color: #999;
+      line-height: 1.8;
+    }
+    .note strong { color: #666; }
+    @media print {
+      body { background: #fff; }
+      .print-btn, .deploy-info, .note { display: none; }
+      .grid { gap: 12px; }
+      .card { box-shadow: none; border: 1px solid #eee; break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <h1>📱 营业厅评价二维码汇总</h1>
+  <p class="subtitle">扫码进行服务评价 | 每个二维码对应不同营业厅</p>
+
+  <!-- 部署提示 -->
+  <div class="deploy-info" id="deployInfo">
+    ⚠️ 部署后请修改前端地址：编辑 <code>frontend/js/config.js</code> 中的 <code>API_BASE</code> 为 Render 后端地址<br>
+    当前前端地址: <span id="currentBase" style="font-weight:bold;">请部署后填写</span>
+  </div>
+
+  <!-- 二维码网格 -->
+  <div class="grid" id="outletGrid">
+    <!-- JS 动态生成 -->
+  </div>
+
+  <!-- 打印按钮 -->
+  <button class="print-btn" onclick="window.print()">🖨️ 打印二维码汇总</button>
+
+  <!-- 使用说明 -->
+  <div class="note">
+    <strong>使用说明：</strong><br>
+    1. 将二维码打印后张贴在各营业厅服务台<br>
+    2. 用户扫码后自动进入评价页面，营业厅名称会自动显示<br>
+    3. 如需添加新营业厅，修改后端 <code>main.py</code> 中的 <code>OUTLET_CONFIG</code> 和前端 <code>app.js</code> 中的 <code>OUTLET_MAP</code><br>
+    4. 管理后台地址：<code>前端地址/admin.html</code><br>
+    5. 二维码永久有效（只要域名不变）
+  </div>
+
+  <script>
+    /**
+     * ========== 配置区 ==========
+     * 部署后修改 FRONTEND_BASE 为你的 Vercel 前端地址
+     * 例如: https://service-evaluation.vercel.app
+     */
+    const FRONTEND_BASE = window.location.origin;
+    // const FRONTEND_BASE = 'https://your-project.vercel.app';  // 部署后改为实际地址
+
+    document.getElementById('currentBase').textContent = FRONTEND_BASE;
+
+    // 营业厅列表（与后端 OUTLET_CONFIG 保持一致）
+    const outlets = [
+      { code: 'longshan', name: '龙山路营业厅' },
+      { code: 'huxin',    name: '湖心路营业厅' },
+      { code: 'chengnan', name: '城南营业厅' },
+      { code: 'gaoxin',   name: '高新区营业厅' },
+      { code: 'binhu',    name: '滨湖营业厅' },
+    ];
+
+    const grid = document.getElementById('outletGrid');
+
+    outlets.forEach(outlet => {
+      const url = `${FRONTEND_BASE}/index.html?outlet=${outlet.code}`;
+
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <h3>${outlet.name}</h3>
+        <div class="code-label">代码: ${outlet.code}</div>
+        <div class="qrcode" id="qr-${outlet.code}"></div>
+        <div class="url-info">${url}</div>
+      `;
+      grid.appendChild(card);
+
+      // 生成二维码
+      new QRCode(document.getElementById(`qr-${outlet.code}`), {
+        text: url,
+        width: 160,
+        height: 160,
+        colorDark: '#1a1a2e',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M,
+      });
+    });
+  </script>
+</body>
+</html>
