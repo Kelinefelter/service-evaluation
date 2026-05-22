@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=yes">
+    <title>服务评价系统 · 营业厅管理</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs2@0.0.2/qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary: #1a365d;
+            --primary-light: #2c5282;
+            --bg: #f0f4f8;
+            --card: #ffffff;
+            --border: #e2e8f0;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+            --radius: 20px;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: system-ui, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            padding: 16px;
+            color: var(--text);
+        }
+        .tab-nav {
+            display: flex;
+            gap: 6px;
+            max-width: 700px;
+            margin: 0 auto 20px;
+            background: var(--card);
+            border-radius: 40px;
+            padding: 6px;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 16px;
+            z-index: 50;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 12px 10px;
+            border: none;
+            background: transparent;
+            border-radius: 34px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 6px 16px rgba(26, 54, 93, 0.3);
+        }
+        .panel {
+            display: none;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .panel.active {
+            display: block;
+        }
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            margin-bottom: 16px;
+        }
+        h2 {
+            font-size: 20px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .outlet-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            background: #f8fafc;
+            border-radius: 16px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 12px;
+            border: 1px solid var(--border);
+        }
+        .outlet-info {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .outlet-code {
+            font-size: 12px;
+            background: #e0e7ff;
+            color: #3730a3;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 24px;
+            border: none;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-outline {
+            background: white;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+        .btn-danger {
+            background: #fef2f2;
+            color: var(--danger);
+            border: 1px solid #fecaca;
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        .add-outlet-area {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .add-outlet-area input {
+            flex: 1;
+            min-width: 140px;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 28px;
+            font-size: 14px;
+            outline: none;
+            transition: 0.2s;
+        }
+        .add-outlet-area input:focus {
+            border-color: var(--primary);
+        }
+        .qr-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            backdrop-filter: blur(4px);
+        }
+        .qr-modal {
+            background: white;
+            border-radius: 28px;
+            padding: 28px;
+            text-align: center;
+            max-width: 360px;
+            width: 90%;
+            box-shadow: 0 30px 50px rgba(0, 0, 0, 0.2);
+        }
+        .qr-modal h3 {
+            margin-bottom: 16px;
+        }
+        .qr-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+        .qr-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th,
+        td {
+            text-align: left;
+            padding: 10px 6px;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 12px;
+        }
+        .stats-summary {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .stat-chip {
+            background: #f1f5f9;
+            padding: 10px 18px;
+            border-radius: 24px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+        hr {
+            border: 0.5px solid var(--border);
+            margin: 16px 0;
+        }
+        @media (max-width: 480px) {
+            .tab-btn {
+                font-size: 12px;
+                padding: 10px 6px;
+            }
+            .outlet-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="tab-nav">
+        <button class="tab-btn active" data-tab="panel-outlets">📱 营业厅二维码</button>
+        <button class="tab-btn" data-tab="panel-evaluate">⭐ 评价页面预览</button>
+        <button class="tab-btn" data-tab="panel-stats">📊 数据统计</button>
+    </div>
+
+    <div class="panel active" id="panel-outlets">
+        <div class="card">
+            <h2>🏢 营业厅管理</h2>
+            <p class="subtitle">每个营业厅独立二维码 · 扫码自动识别 · 永久有效</p>
+            <div id="outletList"></div>
+            <div class="add-outlet-area">
+                <input type="text" id="newOutletName" placeholder="营业厅名称，如：龙山路">
+                <input type="text" id="newOutletCode" placeholder="英文代码，如：longshan">
+                <button class="btn btn-primary" id="addOutletBtn">➕ 添加营业厅</button>
+            </div>
+            <p style="font-size:12px;color:var(--text-secondary);margin-top:8px;">
+                💡 代码用于URL参数，例如 ?outlet=longshan ，请使用小写英文
+            </p>
+        </div>
+    </div>
+
+    <div class="panel" id="panel-evaluate">
+        <div class="card" id="evaluationCard">
+            <div style="text-align:center;margin-bottom:20px;">
+                <span style="background:var(--primary);color:white;padding:6px 22px;border-radius:40px;font-weight:600;">🌟 服务评价</span>
+                <div style="font-size:22px;font-weight:700;margin-top:12px;" id="previewOutletName">龙山路营业厅</div>
+            </div>
+            <div style="margin-bottom:16px;">
+                <div style="font-weight:600;margin-bottom:10px;">📊 选择分数</div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;" id="previewScoreButtons"></div>
+                <div style="text-align:center;margin-top:8px;font-weight:500;">当前评分：<span id="previewCurrentScore">未选择</span></div>
+            </div>
+            <div style="margin:20px 0;">
+                <div style="font-weight:600;margin-bottom:6px;">📱 手机号码</div>
+                <input type="tel" id="previewPhone" placeholder="请输入手机号" style="width:100%;padding:14px;border:2px solid var(--border);border-radius:28px;font-size:16px;outline:none;">
+            </div>
+            <button id="previewSubmitBtn" style="width:100%;padding:16px;background:var(--primary);color:white;border:none;border-radius:30px;font-weight:700;font-size:16px;cursor:pointer;">提交评价</button>
+            <div id="previewSuccess" style="display:none;background:#e5f4e8;padding:12px;border-radius:16px;margin-top:12px;text-align:center;color:#1d4732;"></div>
+        </div>
+        <p style="text-align:center;color:var(--text-secondary);font-size:13px;">🔗 预览模式 · 可切换上方营业厅查看效果</p>
+        <div style="text-align:center;margin-top:8px;">
+            <select id="previewOutletSelect" style="padding:8px 16px;border-radius:20px;border:1px solid var(--border);">
+                <option value="">选择预览营业厅</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="panel" id="panel-stats">
+        <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                <h2>📊 评价记录</h2>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn btn-outline btn-sm" id="exportCsvBtn">📥 导出CSV</button>
+                    <button class="btn btn-danger btn-sm" id="clearDataBtn">🗑 清空数据</button>
+                </div>
+            </div>
+            <div class="stats-summary" id="statsSummary"></div>
+            <div style="overflow-x:auto;">
+                <table id="recordsTable">
+                    <thead>
+                        <tr><th>时间</th><th>营业厅</th><th>评分</th><th>手机号</th></tr>
+                    </thead>
+                    <tbody id="recordsBody"></tbody>
+                </table>
+            </div>
+            <div id="emptyStats" class="empty-state">暂无评价记录</div>
+        </div>
+    </div>
+
+    <div class="qr-modal-overlay" id="qrModalOverlay" style="display:none;">
+        <div class="qr-modal">
+            <h3 id="qrModalTitle">二维码</h3>
+            <div class="qr-container" id="qrCodeContainer"></div>
+            <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;" id="qrUrlDisplay"></p>
+            <div class="qr-actions">
+                <button class="btn btn-primary" id="downloadQrBtn">📥 下载二维码</button>
+                <button class="btn btn-outline" id="closeQrModal">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const STORAGE_OUTLETS = 'eval_outlets';
+            const STORAGE_RECORDS = 'eval_records';
+
+            const DEFAULT_OUTLETS = [
+                { name: '龙山路营业厅', code: 'longshan' },
+                { name: '湖心路营业厅', code: 'huxin' },
+                { name: '城南营业厅', code: 'chengnan' },
+            ];
+
+            function getOutlets() {
+                const stored = localStorage.getItem(STORAGE_OUTLETS);
+                if (stored) {
+                    try { return JSON.parse(stored); } catch (e) {}
+                }
+                saveOutlets(DEFAULT_OUTLETS);
+                return DEFAULT_OUTLETS;
+            }
+
+            function saveOutlets(outlets) {
+                localStorage.setItem(STORAGE_OUTLETS, JSON.stringify(outlets));
+            }
+
+            function getRecords() {
+                const stored = localStorage.getItem(STORAGE_RECORDS);
+                if (stored) {
+                    try { return JSON.parse(stored); } catch (e) {}
+                }
+                return [];
+            }
+
+            function saveRecords(records) {
+                localStorage.setItem(STORAGE_RECORDS, JSON.stringify(records));
+            }
+
+            function addRecord(record) {
+                const records = getRecords();
+                records.unshift(record);
+                saveRecords(records);
+            }
+
+            function getBaseUrl() {
+                const loc = window.location;
+                return loc.origin + loc.pathname;
+            }
+
+            function renderOutletList() {
+                const outlets = getOutlets();
+                const container = document.getElementById('outletList');
+                if (!container) return;
+                const baseUrl = getBaseUrl();
+                container.innerHTML = outlets.map((o, idx) => `
+                    <div class="outlet-row">
+                        <div class="outlet-info">
+                            🏢 ${o.name}
+                            <span class="outlet-code">${o.code}</span>
+                        </div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <button class="btn btn-primary btn-sm show-qr-btn" data-code="${o.code}" data-name="${o.name}">📱 查看二维码</button>
+                            <button class="btn btn-outline btn-sm copy-link-btn" data-code="${o.code}">🔗 复制链接</button>
+                            <button class="btn btn-danger btn-sm delete-outlet-btn" data-index="${idx}">✕</button>
+                        </div>
+                    </div>
+                `).join('');
+
+                container.querySelectorAll('.show-qr-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const code = btn.getAttribute('data-code');
+                        const name = btn.getAttribute('data-name');
+                        showQrModal(code, name);
+                    });
+                });
+                container.querySelectorAll('.copy-link-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const code = btn.getAttribute('data-code');
+                        const url = baseUrl + '?outlet=' + code;
+                        navigator.clipboard.writeText(url).then(() => {
+                            alert('链接已复制：' + url);
+                        }).catch(() => {
+                            prompt('请手动复制链接：', url);
+                        });
+                    });
+                });
+                container.querySelectorAll('.delete-outlet-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        if (confirm('确定删除该营业厅？已有评价数据不受影响。')) {
+                            const index = parseInt(btn.getAttribute('data-index'));
+                            const outlets = getOutlets();
+                            outlets.splice(index, 1);
+                            saveOutlets(outlets);
+                            renderOutletList();
+                            updatePreviewSelect();
+                        }
+                    });
+                });
+            }
+
+            document.getElementById('addOutletBtn')?.addEventListener('click', () => {
+                const nameInput = document.getElementById('newOutletName');
+                const codeInput = document.getElementById('newOutletCode');
+                const name = nameInput.value.trim();
+                const code = codeInput.value.trim().toLowerCase();
+                if (!name || !code) {
+                    alert('请填写营业厅名称和英文代码');
+                    return;
+                }
+                if (!/^[a-z0-9_]+$/.test(code)) {
+                    alert('英文代码只能包含小写字母、数字和下划线');
+                    return;
+                }
+                const outlets = getOutlets();
+                if (outlets.find(o => o.code === code)) {
+                    alert('该代码已存在，请使用其他代码');
+                    return;
+                }
+                outlets.push({ name, code });
+                saveOutlets(outlets);
+                nameInput.value = '';
+                codeInput.value = '';
+                renderOutletList();
+                updatePreviewSelect();
+                alert(`已添加：${name}`);
+            });
+
+            let currentQrCode = null;
+
+            function showQrModal(code, name) {
+                const baseUrl = getBaseUrl();
+                const url = baseUrl + '?outlet=' + code;
+                document.getElementById('qrModalTitle').textContent = name + ' · 二维码';
+                document.getElementById('qrUrlDisplay').textContent = url;
+                document.getElementById('qrModalOverlay').style.display = 'flex';
+
+                const qrContainer = document.getElementById('qrCodeContainer');
+                qrContainer.innerHTML = '';
+                try {
+                    currentQrCode = new QRCode(qrContainer, {
+                        text: url,
+                        width: 200,
+                        height: 200,
+                        colorDark: '#1a365d',
+                        colorLight: '#ffffff',
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                } catch (e) {
+                    qrContainer.innerHTML = '<p style="color:red;">二维码生成失败，请检查网络或CDN</p>';
+                }
+            }
+
+            document.getElementById('closeQrModal')?.addEventListener('click', () => {
+                document.getElementById('qrModalOverlay').style.display = 'none';
+                document.getElementById('qrCodeContainer').innerHTML = '';
+                currentQrCode = null;
+            });
+
+            document.getElementById('downloadQrBtn')?.addEventListener('click', () => {
+                const qrContainer = document.getElementById('qrCodeContainer');
+                const canvas = qrContainer.querySelector('canvas');
+                if (!canvas) {
+                    alert('请先打开二维码预览');
+                    return;
+                }
+                const link = document.createElement('a');
+                link.download = '二维码_' + new Date().getTime() + '.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+
+            document.getElementById('qrModalOverlay')?.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    document.getElementById('qrModalOverlay').style.display = 'none';
+                    document.getElementById('qrCodeContainer').innerHTML = '';
+                    currentQrCode = null;
+                }
+            });
+
+            function updatePreviewSelect() {
+                const select = document.getElementById('previewOutletSelect');
+                if (!select) return;
+                const outlets = getOutlets();
+                select.innerHTML = '<option value="">选择预览营业厅</option>' +
+                    outlets.map(o => `<option value="${o.code}">${o.name} (${o.code})</option>`).join('');
+                if (outlets.length > 0) {
+                    select.value = outlets[0].code;
+                    updatePreviewOutlet(outlets[0].code);
+                }
+            }
+
+            function updatePreviewOutlet(code) {
+                const outlets = getOutlets();
+                const outlet = outlets.find(o => o.code === code);
+                const displayName = outlet ? outlet.name : '请选择营业厅';
+                document.getElementById('previewOutletName').textContent = displayName;
+                previewSelectedScore = null;
+                document.getElementById('previewCurrentScore').textContent = '未选择';
+                document.querySelectorAll('#previewScoreButtons .score-btn').forEach(b => b.classList.remove('active'));
+            }
+
+            document.getElementById('previewOutletSelect')?.addEventListener('change', function() {
+                updatePreviewOutlet(this.value);
+            });
+
+            let previewSelectedScore = null;
+            const previewScoreContainer = document.getElementById('previewScoreButtons');
+            if (previewScoreContainer) {
+                for (let i = 1; i <= 10; i++) {
+                    const btn = document.createElement('div');
+                    btn.className = 'score-btn';
+                    btn.style.cssText = 'width:46px;height:46px;border-radius:23px;background:#f8fafc;border:2px solid #e2e8f0;display:flex;align-items:center;justify-content:center;font-weight:700;cursor:pointer;transition:0.2s;';
+                    btn.textContent = i;
+                    btn.setAttribute('data-score', i);
+                    btn.addEventListener('click', function() {
+                        previewSelectedScore = parseInt(this.getAttribute('data-score'));
+                        document.getElementById('previewCurrentScore').textContent = previewSelectedScore + ' 分';
+                        document.querySelectorAll('#previewScoreButtons .score-btn').forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        this.style.background = '#1a365d';
+                        this.style.color = 'white';
+                        this.style.borderColor = '#1a365d';
+                    });
+                    previewScoreContainer.appendChild(btn);
+                }
+            }
+
+            document.getElementById('previewSubmitBtn')?.addEventListener('click', () => {
+                const select = document.getElementById('previewOutletSelect');
+                const code = select.value;
+                if (!code) {
+                    alert('请先选择预览的营业厅');
+                    return;
+                }
+                if (previewSelectedScore === null) {
+                    alert('请选择评分');
+                    return;
+                }
+                const phone = document.getElementById('previewPhone').value.trim();
+                if (!/^1[3-9]\d{9}$/.test(phone)) {
+                    alert('请输入正确的11位手机号');
+                    return;
+                }
+                const outlets = getOutlets();
+                const outlet = outlets.find(o => o.code === code);
+                const record = {
+                    time: new Date().toLocaleString('zh-CN'),
+                    outletName: outlet ? outlet.name : code,
+                    outletCode: code,
+                    score: previewSelectedScore,
+                    phone: phone,
+                    timestamp: new Date().toISOString()
+                };
+                addRecord(record);
+                document.getElementById('previewSuccess').style.display = 'block';
+                document.getElementById('previewSuccess').textContent = `✅ 评价成功！${record.outletName} 收到 ${previewSelectedScore} 分`;
+                document.getElementById('previewPhone').value = '';
+                previewSelectedScore = null;
+                document.getElementById('previewCurrentScore').textContent = '未选择';
+                document.querySelectorAll('#previewScoreButtons .score-btn').forEach(b => b.classList.remove('active'));
+                renderStats();
+                setTimeout(() => {
+                    document.getElementById('previewSuccess').style.display = 'none';
+                }, 3000);
+            });
+
+            function renderStats() {
+                const records = getRecords();
+                const summaryDiv = document.getElementById('statsSummary');
+                const tbody = document.getElementById('recordsBody');
+                const emptyDiv = document.getElementById('emptyStats');
+
+                if (records.length === 0) {
+                    if (summaryDiv) summaryDiv.innerHTML = '';
+                    if (tbody) tbody.innerHTML = '';
+                    if (emptyDiv) emptyDiv.style.display = 'block';
+                    return;
+                }
+                if (emptyDiv) emptyDiv.style.display = 'none';
+
+                const total = records.length;
+                const avgScore = (records.reduce((sum, r) => sum + Number(r.score), 0) / total).toFixed(1);
+                const outletCounts = {};
+                records.forEach(r => {
+                    outletCounts[r.outletName] = (outletCounts[r.outletName] || 0) + 1;
+                });
+                if (summaryDiv) {
+                    summaryDiv.innerHTML = `
+                        <div class="stat-chip">📋 总评价：${total} 条</div>
+                        <div class="stat-chip">⭐ 平均分：${avgScore}</div>
+                        <div class="stat-chip">🏢 涉及营业厅：${Object.keys(outletCounts).length} 个</div>
+                    `;
+                }
+                if (tbody) {
+                    tbody.innerHTML = records.slice(0, 100).map(r => `
+                        <tr>
+                            <td>${r.time}</td>
+                            <td>${r.outletName}</td>
+                            <td><strong>${r.score} 分</strong></td>
+                            <td>${r.phone}</td>
+                        </tr>
+                    `).join('');
+                }
+            }
+
+            document.getElementById('exportCsvBtn')?.addEventListener('click', () => {
+                const records = getRecords();
+                if (records.length === 0) {
+                    alert('暂无数据可导出');
+                    return;
+                }
+                let csv = '\uFEFF时间,营业厅,营业厅代码,评分,手机号\n';
+                records.forEach(r => {
+                    csv += `${r.time},${r.outletName},${r.outletCode || ''},${r.score},${r.phone}\n`;
+                });
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = '评价数据_' + new Date().toISOString().slice(0, 10) + '.csv';
+                link.click();
+            });
+
+            document.getElementById('clearDataBtn')?.addEventListener('click', () => {
+                if (confirm('确定清空所有评价数据？此操作不可恢复！')) {
+                    saveRecords([]);
+                    renderStats();
+                    alert('数据已清空');
+                }
+            });
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const target = btn.getAttribute('data-tab');
+                    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                    const panel = document.getElementById(target);
+                    if (panel) panel.classList.add('active');
+                    if (target === 'panel-stats') renderStats();
+                    if (target === 'panel-outlets') renderOutletList();
+                    if (target === 'panel-evaluate') updatePreviewSelect();
+                });
+            });
+
+            function init() {
+                renderOutletList();
+                updatePreviewSelect();
+                renderStats();
+                const urlParams = new URLSearchParams(window.location.search);
+                const outletParam = urlParams.get('outlet');
+                if (outletParam) {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    const evalTab = document.querySelector('[data-tab="panel-evaluate"]');
+                    if (evalTab) evalTab.classList.add('active');
+                    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                    const evalPanel = document.getElementById('panel-evaluate');
+                    if (evalPanel) evalPanel.classList.add('active');
+                    const select = document.getElementById('previewOutletSelect');
+                    if (select) {
+                        const outlets = getOutlets();
+                        const found = outlets.find(o => o.code === outletParam);
+                        if (found) {
+                            select.value = outletParam;
+                            updatePreviewOutlet(outletParam);
+                        }
+                    }
+                }
+            }
+
+            init();
+        })();
+    </script>
+</body>
+</html>
