@@ -94,6 +94,36 @@ def is_valid_phone(phone: str) -> bool:
     return bool(re.match(r"^1[3-9]\d{9}$", phone))
 
 
+def is_fake_phone(phone: str) -> bool:
+    """
+    检测虚假/伪造手机号
+    常见模式: 连续数字、重复数字、测试号码
+    返回 True 表示虚假号码
+    """
+    # 黑名单：常见虚假号码
+    blacklist = {
+        "12345678901", "11111111111", "22222222222", "33333333333",
+        "44444444444", "55555555555", "66666666666", "77777777777",
+        "88888888888", "99999999999", "00000000000",
+        "13800138000", "13900139000",
+        "10000000000", "12345678900",
+    }
+    if phone in blacklist:
+        return True
+
+    # 检测连续递进数字（如 12345678901, 10987654321）
+    asc = sum(1 for i in range(1, len(phone)) if int(phone[i]) == int(phone[i - 1]) + 1)
+    desc = sum(1 for i in range(1, len(phone)) if int(phone[i]) == int(phone[i - 1]) - 1)
+    if asc >= 4 or desc >= 4:
+        return True
+
+    # 检测同一数字重复5次以上
+    if re.search(r"(\d)\1{4,}", phone):
+        return True
+
+    return False
+
+
 def get_now_cst() -> str:
     """获取当前北京时间字符串"""
     return datetime.now(CST).strftime("%Y-%m-%d %H:%M:%S")
@@ -116,7 +146,11 @@ async def submit_evaluation(request: Request):
     """
     提交评价
     请求体: { outletCode, score, phone }
-    防刷: 同IP 5分钟内最多提交3次
+    防刷策略（双层限制）:
+      1. 同IP 5分钟内最多提交 3 次
+      2. 同IP 24小时内最多提交 10 次
+    虚假号码黑名单（后端二次校验）:
+      拒绝连续数字、纯重复数字、已知测试号码
     """
     body = await request.json()
     outlet_code = (body.get("outletCode") or "").strip()
@@ -137,9 +171,11 @@ async def submit_evaluation(request: Request):
     if score < 1 or score > 10:
         raise HTTPException(status_code=400, detail="评分必须在1-10之间")
 
-    # 校验手机号
+    # 校验手机号（含虚假号码检测）
     if not phone or not is_valid_phone(phone):
         raise HTTPException(status_code=400, detail="请输入正确的11位手机号")
+    if is_fake_phone(phone):
+        raise HTTPException(status_code=400, detail="请填写真实手机号，以便服务回访")
 
     # 获取客户端IP
     client_ip = (
@@ -148,17 +184,30 @@ async def submit_evaluation(request: Request):
         or ""
     )
 
-    # 防刷：检查同IP最近5分钟内提交次数
+    # 防刷 1: 检查同IP最近5分钟内提交次数
     five_min_ago = (datetime.now(CST) - timedelta(minutes=5)).strftime(
         "%Y-%m-%d %H:%M:%S"
     )
+    # 防刷 2: 检查同IP 24小时内提交次数
+    one_day_ago = (datetime.now(CST) - timedelta(hours=24)).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
     with get_db() as conn:
-        row = conn.execute(
+        # 5分钟窗口
+        recent_cnt = conn.execute(
             "SELECT COUNT(*) as cnt FROM evaluations WHERE ip = ? AND created_at > ?",
             (client_ip, five_min_ago),
         ).fetchone()
-        if row["cnt"] >= 3:
+        if recent_cnt["cnt"] >= 3:
             raise HTTPException(status_code=429, detail="提交过于频繁，请5分钟后再试")
+
+        # 24小时窗口
+        daily_cnt = conn.execute(
+            "SELECT COUNT(*) as cnt FROM evaluations WHERE ip = ? AND created_at > ?",
+            (client_ip, one_day_ago),
+        ).fetchone()
+        if daily_cnt["cnt"] >= 10:
+            raise HTTPException(status_code=429, detail="今日提交已达上限，请明天再试")
 
         cursor = conn.execute(
             "INSERT INTO evaluations (outlet_code, outlet_name, score, phone, ip) VALUES (?, ?, ?, ?, ?)",

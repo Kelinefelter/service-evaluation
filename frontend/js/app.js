@@ -244,7 +244,74 @@ function autoFillPhone() {
  * @returns {boolean}
  */
 function isValidPhone(phone) {
-  return /^1[3-9]\d{9}$/.test(phone);
+  if (!/^1[3-9]\d{9}$/.test(phone)) return false;
+
+  // 虚假号码黑名单：拒绝明显伪造的号码
+  if (isFakePhone(phone)) return false;
+
+  return true;
+}
+
+/**
+ * 检测虚假/伪造手机号
+ * 常见模式：连续数字、重复数字、测试号码
+ * @param {string} phone - 11位手机号
+ * @returns {boolean} true=虚假号码
+ */
+function isFakePhone(phone) {
+  // 黑名单：常见虚假号码
+  const BLACKLIST = [
+    '12345678901', '11111111111', '22222222222', '33333333333',
+    '44444444444', '55555555555', '66666666666', '77777777777',
+    '88888888888', '99999999999', '00000000000',
+    '13800138000', '13900139000',  // 测试号码
+    '10000000000', '12345678900',
+  ];
+  if (BLACKLIST.includes(phone)) return true;
+
+  // 检测连续递进数字（如 12345678901, 10987654321）
+  let asc = 0, desc = 0;
+  for (let i = 1; i < phone.length; i++) {
+    if (parseInt(phone[i]) === parseInt(phone[i - 1]) + 1) asc++;
+    if (parseInt(phone[i]) === parseInt(phone[i - 1]) - 1) desc++;
+  }
+  if (asc >= 4 || desc >= 4) return true;
+
+  // 检测同一数字重复5次以上（如 13888888888）
+  const repeats = phone.match(/(\d)\1{4,}/g);
+  if (repeats && repeats.length > 0) return true;
+
+  // 检测 AABB 或 ABAB 过高重复（如 13888888888 已覆盖）
+
+  return false;
+}
+
+/**
+ * 获取虚假号码的具体原因（用于提示用户）
+ * @param {string} phone - 手机号
+ * @returns {string} 空字符串=合法
+ */
+function getFakePhoneReason(phone) {
+  if (!phone || phone.length !== 11) return '';
+  const BLACKLIST = [
+    '12345678901', '11111111111', '22222222222', '33333333333',
+    '44444444444', '55555555555', '66666666666', '77777777777',
+    '88888888888', '99999999999', '00000000000',
+    '13800138000', '13900139000', '10000000000', '12345678900',
+  ];
+  if (BLACKLIST.includes(phone)) return '请填写真实手机号，以便服务回访';
+
+  let asc = 0, desc = 0;
+  for (let i = 1; i < phone.length; i++) {
+    if (parseInt(phone[i]) === parseInt(phone[i - 1]) + 1) asc++;
+    if (parseInt(phone[i]) === parseInt(phone[i - 1]) - 1) desc++;
+  }
+  if (asc >= 4 || desc >= 4) return '请填写真实手机号，以便服务回访';
+
+  const repeats = phone.match(/(\d)\1{4,}/g);
+  if (repeats && repeats.length > 0) return '请填写真实手机号，以便服务回访';
+
+  return '';
 }
 
 /**
